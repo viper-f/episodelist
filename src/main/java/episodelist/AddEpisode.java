@@ -13,6 +13,7 @@ import com.amazonaws.services.dynamodbv2.document.Table;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.DoubleStream;
 
@@ -28,6 +29,7 @@ public class AddEpisode implements RequestHandler<Map, Response> {
 
     public void putItemInTable(Episode episode) {
 
+        List<Object> t = episode.characters;
 
         AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
         DynamoDB dynamoDB = new DynamoDB(client);
