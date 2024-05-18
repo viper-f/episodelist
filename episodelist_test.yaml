@@ -1,0 +1,117 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: An AWS Serverless Application Model template describing your function.
+Resources:
+  episodelistsource:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-episodeli-${AWS::AccountId}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: alias/aws/s3
+      PublicAccessBlockConfiguration:
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  episodelistsourceBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref episodelistsource
+      PolicyDocument:
+        Id: RequireEncryptionInTransit
+        Version: '2012-10-17'
+        Statement:
+          - Principal: '*'
+            Action: '*'
+            Effect: Deny
+            Resource:
+              - !GetAtt episodelistsource.Arn
+              - !Sub ${episodelistsource.Arn}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: 'false'
+  episodelist:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        DefaultCacheBehavior:
+          TargetOriginId: <String>
+          ViewerProtocolPolicy: <String>
+        Enabled: <Boolean>
+        Origins:
+          - DomainName: !GetAtt episodelistsource.RegionalDomainName
+            Id: MyCDN
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub
+                - origin-access-identity/cloudfront/${OriginAccessIdentity}
+                - OriginAccessIdentity: !Ref episodelistOriginAccessIdentity
+  episodelistOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: MyCDN
+  episodelistepisodelistsourcePolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref episodelistsource
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity
+                ${episodelistOriginAccessIdentity}
+            Action: s3:GetObject
+            Resource: !Sub
+              - ${BucketArn}/*
+              - BucketArn: !GetAtt episodelistsource.Arn
+  addepisode:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: build/distributions/episodelist.zip
+      Description: ''
+      MemorySize: 512
+      Timeout: 15
+      Handler: episodelist.AddEpisode::handleRequest
+      Runtime: java21
+      Architectures:
+        - x86_64
+      EphemeralStorage:
+        Size: 512
+      EventInvokeConfig:
+        MaximumEventAgeInSeconds: 21600
+        MaximumRetryAttempts: 2
+      FunctionUrlConfig:
+        AuthType: NONE
+        InvokeMode: BUFFERED
+      PackageType: Zip
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+              Resource: arn:aws:logs:us-east-1:987907265084:*
+            - Effect: Allow
+              Action:
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource:
+                - >-
+                  arn:aws:logs:us-east-1:987907265084:log-group:/aws/lambda/addepisode:*
+      SnapStart:
+        ApplyOn: None
+      RuntimeManagementConfig:
+        UpdateRuntimeOn: Auto
+  episiodelist:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      KeySchema:
+        - KeyType: <String>
+          AttributeName: <String>
+        - AttributeName: timestamp
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: timestamp
+          AttributeType: S
+
+
