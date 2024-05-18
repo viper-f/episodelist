@@ -22,7 +22,7 @@ Resources:
         AuthType: NONE
         InvokeMode: BUFFERED
 
-  TransactionTable:
+  EpisodeTable:
     Type: AWS::Serverless::SimpleTable # More info about SimpleTable Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-simpletable.html
     Properties:
       PrimaryKey:
