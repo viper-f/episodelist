@@ -1,5 +1,10 @@
 package episodelist;
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.document.PrimaryKey;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.google.gson.Gson;
@@ -7,16 +12,9 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
-import com.amazonaws.services.dynamodbv2.document.PrimaryKey;
 import com.amazonaws.services.dynamodbv2.document.Table;
 
-
-import java.net.URI;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.DoubleStream;
-
 
 public class AddEpisode implements RequestHandler<Map, Response> {
     Gson gson = new Gson();
@@ -29,13 +27,15 @@ public class AddEpisode implements RequestHandler<Map, Response> {
 
     public void putItemInTable(Episode episode) {
 
-        List<Object> t = episode.characters;
-
-        AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
+        AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard()
+                .withRegion(Regions.US_EAST_1)
+                .build();
         DynamoDB dynamoDB = new DynamoDB(client);
 
         Table table = dynamoDB.getTable("EpisodeTable");
         Item item = new Item();
+        String key = episode.fandom_id.toString()+'-'+episode.episode_id.toString();
+        item.withPrimaryKey("Id", key);
         item.withString("title", episode.title);
         item.withInt("fandom_id", episode.fandom_id);
         item.withList("characters", episode.characters);
