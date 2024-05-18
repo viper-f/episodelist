@@ -16,4 +16,4 @@ phases:
       - echo Build completed on `date`
 artifacts:
   files:
-    - target/episodelist-1.0.jar
+    - target/episodelist-1.0-SNAPSHOT.jar
