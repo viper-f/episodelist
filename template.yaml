@@ -1,12 +1,12 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Transform: 'AWS::Serverless-2016-10-31'
-Description: "episodelist"
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
 
 Resources:
+
   AddEpisode:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: target/episodelist-1.0-SNAPSHOT-shaded.jar
+      CodeUri: .
       Handler: episodelist.AddEpisode::handleRequest
       Runtime: java21
       Architectures:
@@ -21,6 +21,19 @@ Resources:
       Policies:
         - AmazonDynamoDBFullAccess
 
+  BuildList:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: episodelist.BuildList::handleRequest
+      Runtime: java21
+      Architectures:
+        - x86_64
+      MemorySize: 512
+      Environment:
+        Variables:
+          PARAM1: VALUE
+
   EpisodeTable:
     Type: AWS::Serverless::SimpleTable
     Properties:
@@ -30,3 +43,4 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
+
