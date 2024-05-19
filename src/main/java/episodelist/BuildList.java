@@ -1,12 +1,16 @@
 package episodelist;
 
+import com.amazonaws.services.cloudfront.AmazonCloudFront;
+import com.amazonaws.services.cloudfront.AmazonCloudFrontClientBuilder;
+import com.amazonaws.services.cloudfront.model.CreateInvalidationRequest;
+import com.amazonaws.services.cloudfront.model.InvalidationBatch;
+import com.amazonaws.services.cloudfront.model.Paths;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.google.gson.Gson;
@@ -25,20 +29,20 @@ public class BuildList implements RequestHandler<Map, Response> {
     Gson gson = new Gson();
 
     public Response handleRequest(Map event, Context context) {
-        LambdaLogger logger = context.getLogger();
-        logger.log(event.toString());
-        RebuildTrigger data = this.gson.fromJson(event.toString(), RebuildTrigger.class);
         List<Episode> episodes = null;
         try {
-            episodes = this.FindEpisodes(data.fandom_id);
+            episodes = this.findEpisodes((Integer)event.get("fandom_id"));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        this.putInS3(data.fandom_id, episodes);
+        String filename = this.putInS3((Integer)event.get("fandom_id"), episodes);
+        if (filename != null) {
+            this.invalidateCache(filename);
+        }
         return new Response("Success", 200);
     }
 
-    private List<Episode> FindEpisodes(Integer value) throws Exception {
+    private List<Episode> findEpisodes(Integer value) throws Exception {
 
         List<Episode> scanResult = new ArrayList<>();
         try {
@@ -61,7 +65,7 @@ public class BuildList implements RequestHandler<Map, Response> {
         return scanResult;
     }
 
-    private void putInS3(Integer fandom_id, List<Episode> episodes) {
+    private String putInS3(Integer fandom_id, List<Episode> episodes) {
         AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
         String text = gson.toJson(episodes);
         byte[] contentAsBytes = text.getBytes(StandardCharsets.UTF_8);
@@ -70,11 +74,27 @@ public class BuildList implements RequestHandler<Map, Response> {
         md.setContentLength(contentAsBytes.length);
         md.setContentType("application/json");
         try {
-            s3.putObject("episodelist-source", "episodelist-"+fandom_id.toString()+".html", contentsAsStream, md);
+            String filename = "episodelist-"+fandom_id.toString()+".html";
+            s3.putObject("episodelist-source", filename, contentsAsStream, md);
+            return filename;
         } catch (AmazonServiceException e) {
-            System.err.println(e.getErrorMessage());
+            System.err.println("S3 error: " + e.getErrorMessage());
             System.exit(1);
         }
+        return null;
+    }
+
+    private void invalidateCache(String file_name)
+    {
+        AmazonCloudFront client = AmazonCloudFrontClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
+        Paths paths = new Paths()
+                .withItems("/"+file_name)
+                .withQuantity(1);
+        InvalidationBatch batch = new InvalidationBatch()
+                .withPaths(paths)
+                .withCallerReference(String.valueOf(System.currentTimeMillis()));
+        CreateInvalidationRequest request = new CreateInvalidationRequest("E7AKHQ5SDO0BJ", batch);
+        client.createInvalidation(request);
     }
 
 }
