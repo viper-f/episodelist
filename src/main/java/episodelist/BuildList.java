@@ -68,8 +68,9 @@ public class BuildList implements RequestHandler<Map, Response> {
         ByteArrayInputStream contentsAsStream = new ByteArrayInputStream(contentAsBytes);
         ObjectMetadata md = new ObjectMetadata();
         md.setContentLength(contentAsBytes.length);
+        md.setContentType("application/json");
         try {
-            s3.putObject("episodelist-source", "episodelist-"+fandom_id.toString()+".json", contentsAsStream, md);
+            s3.putObject("episodelist-source", "episodelist-"+fandom_id.toString()+".html", contentsAsStream, md);
         } catch (AmazonServiceException e) {
             System.err.println(e.getErrorMessage());
             System.exit(1);

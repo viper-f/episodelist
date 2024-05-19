@@ -49,7 +49,7 @@ public class AddEpisode implements RequestHandler<Map, Response> {
     private void invokeRebuild(Integer fandom_id) {
         AWSLambda client = AWSLambdaClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
         InvokeRequest req = new InvokeRequest()
-                .withFunctionName("BuildList")
+                .withFunctionName("episodelist-BuildList-1LTykfN3qa5A")
                 .withInvocationType(InvocationType.Event)
                 .withPayload(gson.toJson(new RebuildTrigger(fandom_id)));
         client.invoke(req);
