@@ -4,9 +4,6 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
-import com.amazonaws.services.dynamodbv2.document.*;
-import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec;
-import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
@@ -40,30 +37,6 @@ public class BuildList implements RequestHandler<Map, Response> {
         this.putInS3(data.fandom_id, episodes);
         return new Response("Success", 200);
     }
-
-//    private List<Episode> getEpisodes(Integer fandom_id) {
-//        AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
-//        DynamoDB dynamoDB = new DynamoDB(client);
-//
-//        Table table = dynamoDB.getTable("EpisodeTable");
-//
-//        QuerySpec spec = new QuerySpec()
-//                .withFilterExpression("fandom_id = :v_id")
-//                .withValueMap(new ValueMap()
-//                        .withInt(":v_id", fandom_id));
-//
-//        List<Episode> episodes = new ArrayList<>();
-//        ItemCollection<QueryOutcome> items = table.query(spec);
-//        Iterator<Item> iterator = items.iterator();
-//        Boolean t = iterator.hasNext();
-//        Item item = null;
-//        while (iterator.hasNext()) {
-//            item = iterator.next();
-//            episodes.add(new Episode(item));
-//        }
-//
-//        return episodes;
-//    }
 
     private List<Episode> FindEpisodes(Integer value) throws Exception {
 
