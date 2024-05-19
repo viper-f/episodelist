@@ -24,7 +24,7 @@ public class AddEpisode implements RequestHandler<Map, Response> {
         LambdaLogger logger = context.getLogger();
         Episode episode = this.gson.fromJson((String)event.get("body"), Episode.class);
         this.putItemInTable(episode, logger);
-        this.invokeRebuild(episode.fandom_id);
+        this.invokeRebuild(episode.getFandom_id());
         return new Response("Success", 200);
     }
 
@@ -35,14 +35,14 @@ public class AddEpisode implements RequestHandler<Map, Response> {
         DynamoDB dynamoDB = new DynamoDB(client);
         Table table = dynamoDB.getTable("EpisodeTable");
         Item item = new Item();
-        String key = episode.fandom_id.toString()+'-'+episode.episode_id.toString();
+        String key = episode.getFandom_id().toString()+'-'+episode.getEpisodeId().toString();
         item.withPrimaryKey("Id", key);
-        item.withString("title", episode.title);
-        item.withInt("episode_id", episode.episode_id);
-        item.withInt("fandom_id", episode.fandom_id);
-        item.withList("characters", episode.characters);
-        item.withString("description", episode.description);
-        item.withString("date_created", episode.date_created);
+        item.withString("title", episode.getTitle());
+        item.withInt("episode_id", episode.getEpisodeId());
+        item.withInt("fandom_id", episode.getFandom_id());
+        item.withString("characters", gson.toJson(episode.getCharacters()));
+        item.withString("description", episode.getDescription());
+        item.withString("date_created", episode.getDate_created());
         table.putItem(item);
     }
 
